@@ -1,91 +1,24 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: pma-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: predictive_maintenance
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - pma-network
-
-  # MLflow Tracking Server
-  mlflow:
-    image: python:3.11-slim
-    container_name: pma-mlflow
-    working_dir: /mlflow
-    command: >
-      bash -c "pip install mlflow && 
-               mlflow server --backend-store-uri sqlite:///mlflow.db 
-                            --default-artifact-root /mlflow/artifacts 
-                            --host 0.0.0.0 --port 5000"
-    ports:
-      - "5000:5000"
-    volumes:
-      - mlflow_data:/mlflow
-    networks:
-      - pma-network
-
-  # Training Service
-  train:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.train
-    container_name: pma-train
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mlflow:
-        condition: service_started
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/predictive_maintenance
-      MLFLOW_TRACKING_URI: http://mlflow:5000
-      DATASET_PATH: /data/raw
-      PROCESSED_DATA_PATH: /data/processed
-      MODELS_PATH: /models
-    volumes:
-      - ./data:/data
-      - ./models:/models
-      - ./mlruns:/mlruns
-    networks:
-      - pma-network
-
   # FastAPI Inference Server
   api:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
     container_name: pma-api
-    depends_on:
-      - postgres
-      - mlflow
     environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/predictive_maintenance
-      MLFLOW_TRACKING_URI: http://mlflow:5000
       API_HOST: 0.0.0.0
-      API_PORT: 8000
+      API_PORT: 8003
       MODELS_PATH: /models
+      MLFLOW_TRACKING_URI: file:./mlruns
     ports:
-      - "8000:8000"
+      - "8003:8003"
     volumes:
       - ./models:/models
-      - ./logs:/app/logs
-    networks:
-      - pma-network
+      - ./mlruns:/mlruns
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -102,28 +35,9 @@ services:
       - "8501:8501"
     volumes:
       - ./dashboard:/app/dashboard
-    networks:
-      - pma-network
-
-  # Prometheus (optional - for metrics)
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: pma-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    networks:
-      - pma-network
+    environment:
+      STREAMLIT_SERVER_PORT: 8501
+      STREAMLIT_SERVER_HEADLESS: "true"
 
 volumes:
-  postgres_data:
-  mlflow_data:
-  prometheus_data:
-
-networks:
-  pma-network:
-    driver: bridge
+  mlruns_data:
