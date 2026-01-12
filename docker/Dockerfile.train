@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy project files
+COPY requirements.txt .
+COPY pyproject.toml .
+COPY pma/ ./pma/
+COPY pipelines/ ./pipelines/
+COPY data/ ./data/
+COPY models/ ./models/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Run training pipeline
+CMD ["python", "-m", "pipelines.train"]

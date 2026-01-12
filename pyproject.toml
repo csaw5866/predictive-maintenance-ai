@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "predictive-maintenance-ai"
+version = "1.0.0"
+description = "Production-grade predictive maintenance AI platform for industrial machinery"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Joey Hieronimy", email = "joey@example.com"}
+]
+keywords = [
+    "predictive-maintenance",
+    "time-series",
+    "machine-learning",
+    "mlops",
+    "industrial-ai"
+]
+
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+    "xgboost>=2.0.0",
+    "lightgbm>=4.0.0",
+    "torch>=2.0.0",
+    "plotly>=5.17.0",
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "pydantic>=2.0.0",
+    "mlflow>=2.8.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
+    "requests>=2.31.0",
+    "tqdm>=4.66.0",
+    "joblib>=1.3.0",
+    "apache-airflow>=2.7.0",
+    "apache-airflow-providers-postgres>=5.7.0",
+    "streamlit>=1.28.0",
+    "plotly-dash>=2.14.0",
+    "dash-bootstrap-components>=1.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.10.0",
+    "flake8>=6.1.0",
+    "isort>=5.12.0",
+    "mypy>=1.6.0",
+    "jupyter>=1.0.0",
+    "ipython>=8.15.0",
+    "pre-commit>=3.4.0",
+]
+
+[project.urls]
+Repository = "https://github.com/csaw5866/predictive-maintenance-ai"
+Issues = "https://github.com/csaw5866/predictive-maintenance-ai/issues"
+Documentation = "https://github.com/csaw5866/predictive-maintenance-ai/blob/main/README.md"
+
+[tool.setuptools]
+packages = ["pma"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=pma --cov-report=html"
