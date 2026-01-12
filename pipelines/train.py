@@ -54,7 +54,18 @@ def run_training_pipeline():
 
     # Remove original sensor columns for model input
     feature_cols = [col for col in train_features.columns if not col.startswith("sensor_")]
-    feature_cols = [col for col in feature_cols if col not in ["machine_id", "cycle", "max_cycles", "cycles_to_failure"]]
+    # Exclude identifiers and label columns
+    feature_cols = [
+        col
+        for col in feature_cols
+        if col not in [
+            "machine_id",
+            "cycle",
+            "max_cycles",
+            "cycles_to_failure",
+            "failure_imminent",
+        ]
+    ]
 
     X_train = train_features[feature_cols].values
     y_train_classification = train_features["failure_imminent"].values

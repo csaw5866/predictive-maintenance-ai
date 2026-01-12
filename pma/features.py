@@ -130,10 +130,24 @@ class FeatureEngineer:
                 lambda x: x.std() / (x.mean() + 1e-8), raw=True
             )
 
-        # Trend analysis
+        # Trend analysis (robust to numerical issues)
+        def _safe_trend(x: np.ndarray) -> float:
+            try:
+                n = len(x)
+                if n < 2:
+                    return 0.0
+                if not np.all(np.isfinite(x)):
+                    return 0.0
+                # Use float64 to improve numerical stability
+                xi = np.arange(n, dtype=np.float64)
+                yi = np.asarray(x, dtype=np.float64)
+                return float(np.polyfit(xi, yi, 1)[0])
+            except Exception:
+                return 0.0
+
         for col in sensor_cols:
             features[f"{col}_trend"] = df[col].rolling(self.rolling_window, min_periods=1).apply(
-                lambda x: np.polyfit(range(len(x)), x, 1)[0], raw=True
+                _safe_trend, raw=True
             )
 
         # Overall system health score (inverse of normalized mean sensor values)
