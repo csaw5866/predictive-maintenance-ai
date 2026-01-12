@@ -119,6 +119,77 @@ chmod +x ~/restart_pma.sh
 ~/restart_pma.sh
 ```
 
+## Model Retraining
+
+To retrain the ML models on latest data:
+
+### Quick Retrain (Using Existing Data)
+If you've added new data to `./data/raw/`, retrain with:
+
+```bash
+# Terminal in project root
+cd /Users/joeyhieronimy/Documents/Projects/predictive-maintenance-ai
+source .venv/bin/activate
+export DATASET_PATH=./data/raw
+export PROCESSED_DATA_PATH=./data/processed
+export MLFLOW_TRACKING_URI=file:./mlruns
+python -m pipelines.train
+```
+
+This will:
+1. Load data from `./data/raw/` (NASA C-MAPSS format or synthetic fallback)
+2. Preprocess sensors and add RUL/failure labels
+3. Engineer 364 features per sample
+4. Train 8 models (4 classifiers, 4 regressors)
+5. Save best models to `./models/best_classifier.pkl` and `./models/best_regressor.pkl`
+6. Log metrics to MLflow at `./mlruns/`
+
+**Output:** Look for `Best Classifier:` and `Best Regressor:` in terminal output, plus MLflow metrics logged.
+
+### Download Fresh NASA C-MAPSS Data
+To retrain on the official NASA dataset:
+
+```bash
+cd /Users/joeyhieronimy/Documents/Projects/predictive-maintenance-ai/data/raw
+rm -f *.txt *.zip
+wget https://data.nasa.gov/docs/legacy/CMAPSSData.zip
+unzip CMAPSSData.zip
+cd /Users/joeyhieronimy/Documents/Projects/predictive-maintenance-ai
+source .venv/bin/activate
+python -m pipelines.train
+```
+
+### Monitor Retraining with MLflow
+While retraining (or after), view experiment metrics:
+
+```bash
+# Terminal 3
+cd /Users/joeyhieronimy/Documents/Projects/predictive-maintenance-ai
+source .venv/bin/activate
+mlflow ui --backend-store-uri file:./mlruns --default-artifact-root ./mlruns/artifacts
+```
+
+Then visit http://localhost:5000 to see:
+- Run parameters (feature thresholds, train/test split)
+- Metrics (F1 score, ROC-AUC, RMSE, MAE)
+- Model artifacts and feature importance
+
+### After Retraining
+Once retraining completes, restart the API to load new models:
+
+```bash
+# In Terminal 1 (stop current API with Ctrl+C)
+pkill -f "uvicorn.*main"
+sleep 2
+cd /Users/joeyhieronimy/Documents/Projects/predictive-maintenance-ai
+source .venv/bin/activate
+uvicorn api.main:app --reload --host 0.0.0.0 --port 8003
+```
+
+Dashboard will automatically use updated models on next prediction.
+
+---
+
 ## Troubleshooting
 
 **Port already in use:**
